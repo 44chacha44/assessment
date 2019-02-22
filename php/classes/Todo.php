@@ -83,7 +83,7 @@ class Todo implements \JsonSerializable {
 	 *@throws \RangeExceptionif $newTodoId is not positive
 	 *@throws \TypeError if the id is not correct type
 	 */
-	public function setTodoId( $newTodoId): void {
+	public function setTodoId($newTodoId): void {
 				try {
 						$uuid = self::validateUuid($newTodoId);
 				}	catch(\InvalidArgumentException | \RangeException | \TypeError | \Exception $exception) {
@@ -108,7 +108,7 @@ class Todo implements \JsonSerializable {
 	 * @param string $newTodoAuthor new value of author
 	 * @throws \InvalidArgumentException if $newTodoAuthor is not a string or insecure
 	 * @throws \RangeException if $newTodoAuthor is > 32 characters
-	 * @throws \TypeError if $newTodoAuthor is not a BadQueryStringException
+	 * @throws \TypeError if $newTodoAuthor is not a string
 	 *
 	 **/
 	public function setTodoAuthor(string $newTodoAuthor) : void {
@@ -153,5 +153,36 @@ class Todo implements \JsonSerializable {
 				}
 				//convert and store the date
 				$this->todoDate = $newTodoDate;
+	}
+	/**
+	 * Accessor method for todoTask
+	 * @return string value of task
+	 */
+	public function getTodoTask(): string {
+		return ($this->todoTask);
+	}
+
+	/**
+	 * Mutator method for todoTask
+	 *
+	 * @param string $newTodoTask new value of task
+	 * @throws \InvalidArgumentException if $newTodoTask is not a string or insecure
+	 * @throws \RangeException if $newTodoTask is > 255 characters
+	 * @throws \TypeError if $newTodoTask is not a string
+	 *
+	 **/
+	public function setTodoTask(string $newTodoTask) : void {
+		//verify the string is secure
+		$newTodoTask = trim($newTodoTask);
+		$newTodoTask = filter_var($newTodoTask, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+		if(empty($newTodoTask) === true) {
+			throw(new \InvalidArgumentException("Task is empty or insecure"));
+		}
+		// verify the task will fit in the database
+		if(strlen($newTodoTask) > 255) {
+			throw(new \RangeException("Task is too long"));
+		}
+		//store the task
+		$this->todoTask = $newTodoTask;
 	}
 }

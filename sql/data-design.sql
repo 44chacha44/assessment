@@ -6,6 +6,6 @@ CREATE TABLE todo (
 	todoId BINARY(16) NOT NULL,
 	todoAuthor VARCHAR(32) NOT NULL,
 	todoDate DATETIME(6) NOT NULL,
-	todoTask VARCHAR(255),
+	todoTask VARCHAR(255) NOT NULL,
 	PRIMARY KEY (todoId)
 );
