@@ -6,6 +6,7 @@ require_once (dirname(__DIR__, 2) . "/vendor/autoload.php");
 
 use Fullstack\Assessment\ValidateDate;
 use Fullstack\Assessment\ValidateUuid;
+use http\Exception\BadQueryStringException;
 use http\Exception\InvalidArgumentException;
 use Ramsey\Uuid\Uuid;
 
@@ -91,5 +92,66 @@ class Todo implements \JsonSerializable {
 				}
 				//convert and store the todoId
 		$this->todoId = $uuid;
+	}
+
+	/**
+	 * Accessor method for todoAuthor
+	 * @return string value of author
+	 */
+	public function getTodoAuthor(): string {
+				return ($this->todoAuthor);
+	}
+
+	/**
+	 * Mutator method for todoAuthor
+	 *
+	 * @param string $newTodoAuthor new value of author
+	 * @throws \InvalidArgumentException if $newTodoAuthor is not a string or insecure
+	 * @throws \RangeException if $newTodoAuthor is > 32 characters
+	 * @throws \TypeError if $newTodoAuthor is not a BadQueryStringException
+	 *
+	 **/
+	public function setTodoAuthor(string $newTodoAuthor) : void {
+				//verify the author is secure
+				$newTodoAuthor = trim($newTodoAuthor);
+				$newTodoAuthor = filter_var($newTodoAuthor, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+				if(empty($newTodoAuthor) === true) {
+						throw(new \InvalidArgumentException("Author is empty or insecure"));
+				}
+				// verify the author will fit in the database
+				if(strlen($newTodoAuthor) > 32) {
+						throw(new \RangeException("Author is too long"));
+				}
+				//store the author
+				$this->todoAuthor = $newTodoAuthor;
+	}
+
+	/**
+	 * Accessor method for todoDate
+	 * @return \DateTime value of todoDate
+	 */
+	public function getTodoDate() : \DateTime {
+				return($this->todoDate);
+	}
+
+	/**
+	 * Mutator method for todoDate
+	 *
+	 * @param \DateTime|string $newTodoDate date of todo
+	 * @throws \InvalidArgumentException if $newTodoDate is not a valid object or BadQueryStringException
+	 * @throws \RangeException if $newTodoDate is a date that does not exist
+	 * @throws \TypeError if $todoDate is not a /DateTime
+	 *
+	 **/
+	public function setTodoDate($newTodoDate) : void {
+				//store the end date using the ValidateDate trait
+				try {
+						$newTodoDate = self::validateDateTime($newTodoDate);
+				} catch (\InvalidArgumentException | \RangeException | \TypeError | \Exception $exception) {
+					$exceptionType = get_class($exception);
+					throw(new $exceptionType($exception->getMessage(), 0, $exception));
+				}
+				//convert and store the date
+				$this->todoDate = $newTodoDate;
 	}
 }
