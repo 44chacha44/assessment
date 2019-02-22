@@ -185,4 +185,119 @@ class Todo implements \JsonSerializable {
 		//store the task
 		$this->todoTask = $newTodoTask;
 	}
+
+	/**
+	 * Inserts this todo into mySQL
+	 *
+	 * @param \PDO $pdo PDO connection object
+	 * @throws \PDOException when mySQL related errors occur
+	 * @throws \TypeError if $pdo is not a PDO connection object
+	 *
+	 **/
+	public function insert(\PDO $pdo) : void {
+				//create query template
+				$query = "INSERT INTO todo(todoId, todoAuthor, todoDate, todoTask) VALUES(:todoId, :todoAuthor, :todoDate, :todoTask)";
+				$statement = $pdo->prepare($query);
+				// bind the variables to the place holders in the template
+				$formattedDate = $this->todoDate->format("Y-m-d H:i:s.u");
+
+				$parameters = [
+					"todoId" => $this->todoId->getBytes(),
+					"todoAuthor" => $this->todoAuthor,
+					"todoDate" => $formattedDate,
+					"todoTask" => $this->todoTask,
+					];
+			$statement->execute($parameters);
+	}
+
+	/**
+	 * Gets the todo by todoId
+	 *
+	 * @param \PDO $pdo PDO connection object
+	 * @param Uuid|string $todoId id to search by
+	 * @return todo|null todo found or null if not found
+	 * @throws \PDOException when my sql related errors occur
+	 * @throws \TypeError when a variable are not the correct data type
+	 **/
+	public static function getTodoByTodoId(\PDO $pdo, $todoId) : Todo {
+				//sanitize the id before searching
+				try {
+						$todoId = self::validateUuid($todoId);
+				}	catch(\InvalidArgumentException | \RangeException | \TypeError | \Exception $exception) {
+							throw(new \PDOException($exception->getMessage(), 0, $exception));
+				}
+
+				//create query template
+				$query = "INSERT INTO todo(todoId, todoAuthor, todoDate, todoTask) VALUES(:todoId, :todoAuthor, :todoDate, :todoTask)";
+				$statement = $pdo->prepare($query);
+
+				// bind the todo id to the place holder in the template
+				$parameters = ["todoId" => $todoId->getBytes()];
+				$statement->execute($parameters);
+
+				//Grab the event from mysql
+				try {
+							$todo = null;
+							$statement->setFetchMode(\PDO::FETCH_ASSOC);
+							$row = $statement->fetch();
+							if($row !== false) {
+									$todo = new todo($row["todoId"], $row["todoAuthor"], $row["todoDate"], $row["todoTask"]);
+							}
+				}	catch(\Exception $exception) {
+							// if the row couldn't be converted, rethrow it
+							throw(new \PDOException($exception->getMessage(), 0, $exception));
+				}
+				return($todo);
+	}
+
+	/**
+	 * Gets todo by Author
+	 *
+	 * @param \PDO $pdo PDO connection object
+	 * @param string $todoAuthor todo's content to search for
+	 * @return \SplFixedArray an array of todo's found
+	 * @throws \PDOException when mysql related errors occur
+	 * @throws \TypeError when variables are not the correct data type
+	 *
+	 **/
+	public static function getTodoByTodoAuthor(\PDO $pdo, string $todoAuthor) : \SplFixedArray {
+					//sanitize the content before searching
+					$todoAuthor = trim($todoAuthor);
+					$todoAuthor = filter_var($todoAuthor, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+					if(empty($todoAuthor) === true) {
+							throw(new \PDOException("Author is invalid"));
+					}
+
+					//escape any mysql wild cards
+					$todoAuthor = str_replace("_", "\\_", str_replace("%", "\\%", $todoAuthor));
+
+					//create query template
+					$query = "INSERT INTO todo(todoId, todoAuthor, todoDate, todoTask) VALUES(:todoId, :todoAuthor, :todoDate, :todoTask)";
+					$statement = $pdo->prepare($query);
+
+					//bind the todoAuthor content to the place holder in the template
+					$todos = new \SplFixedArray($statement->rowCount());
+					$statement->setFetchMode(\PDO::FETCH_ASSOC);
+					while(($row = $statement-fetch()) !== false) {
+							try {
+									$todo = new Todo($row["todoId"], $row["todoAuthor"], $row["todoDate"], $row["todoTask"]);
+									$todos[$todos->key()] = $todo;
+									$todos->next();
+							}	catch(\Exception $exception) {
+									//if the row couldnt be converted, rethrow it
+								throw(new \PDOException(($exception->getMessage(), 0, $exception));
+							}
+					}
+					return($todos);
+	}
+	/**
+	 * Formats the state variables for JSON serialization
+	 *
+	 * @return array resulting state variables to serialize
+	 */
+	public function jsonSerialize() {
+				$fields = get_object_vars($this);
+				$fields["todoId"] = $this->todoId->toString();
+				return ($fields);
+	}
 }
