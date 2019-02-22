@@ -66,3 +66,30 @@ class Todo implements \JsonSerializable {
 						throw(new $exceptionType($exception->getMessage(), 0, $exception));
 				}
 	}
+
+	/**
+	 * Accessor method for todoId
+	 * @return Uuid value of todoId or null if new
+	 */
+	public function getTodoId(): Uuid {
+				return ($this->todoId);
+	}
+
+	/**
+	 * Mutator method for todoId
+	 *
+	 *@param Uuid| string $newTodoId value of new todoid
+	 *@throws \RangeExceptionif $newTodoId is not positive
+	 *@throws \TypeError if the id is not correct type
+	 */
+	public function setTodoId( $newTodoId): void {
+				try {
+						$uuid = self::validateUuid($newTodoId);
+				}	catch(\InvalidArgumentException | \RangeException | \TypeError | \Exception $exception) {
+							$exceptionType = get_class($exception);
+							throw(new $exceptionType($exception->getMessage(), 0, $exception));
+				}
+				//convert and store the todoId
+		$this->todoId = $uuid;
+	}
+}
